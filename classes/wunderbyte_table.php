@@ -1606,11 +1606,14 @@ class wunderbyte_table extends table_sql {
                     $filter .= ($categorycounter == 1) ? "" : " AND ";
                     $valuecounter = 1;
                     if (is_object($value) || is_array($value)) {
+                        // Timezone might vary according to location.
+                        $delta = filter::get_timezone_offset();
                         foreach ($value as $operator => $timestamp) {
                             // Time values will be concatenated via AND.
                             $filter .= ($valuecounter == 1) ? "" : " AND ";
+                            // Apply timezone difference to original timestamp.
+                            $filter .= "($categorykey + $delta * 3600)" . ' ' . $operator . ' ' . $timestamp;
 
-                            $filter .= $categorykey . ' ' . $operator . ' ' . $timestamp;
                             $valuecounter++;
                         }
                     } else {
