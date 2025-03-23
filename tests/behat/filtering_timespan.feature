@@ -19,9 +19,10 @@ Feature: Timespan filtering functionality of wunderbyte_table works as expected
       | teacher1 | Teacher   | 1        |
     And the following "courses" exist:
       | fullname | shortname | startdate  | enddate    |
-      | Course 1 | C1        | 1652317261 | 1652835661 |
-      | Course 2 | C2        | 1683853261 | 1684371661 |
-    ## C1 - 12-18 May 2022, C2 - 12-18 May 2023
+      | Course 1 | C1        | 1652320861 | 1652839261 |
+      | Course 2 | C2        | 1683907261 | 1684425661 |
+    ## C1 - 12 May 2022 2:01:01 AM - 18 May 2022 2:01:01 AM
+    ## C2 - 12 May 2023 4:01:01 PM - 18 May 2023 4:01:01 PM
     And the following "course enrolments" exist:
       | user     | course | role           |
       | user1    | C1     | student        |
@@ -30,6 +31,11 @@ Feature: Timespan filtering functionality of wunderbyte_table works as expected
       | activity | name       | intro      | course | idnumber |
       | page     | PageName1  | PageDesc1  | C1     | PAGE1    |
       | page     | PageName2  | PageDesc2  | C2     | PAGE2    |
+    And I change viewport size to "1600x3000"
+    ## Forcing of timezome is important for date validation
+    ## And the following config values are set as admin:
+       | timezone      | Europe/Berlin |
+       | forcetimezone | Europe/Berlin |
 
   @javascript
   Scenario: Filter course table in wb_table by timespan for overlaping
@@ -70,7 +76,9 @@ Feature: Timespan filtering functionality of wunderbyte_table works as expected
     And I should see "Course 2" in the "#demotable_2_r3" "css_element"
     And I click on "[aria-controls=\"id_collapse_startdate\"]" "css_element"
     And I set the field "date-startdate" in the "#id_collapse_startdate" "css_element" to "2022-05-11"
+    And I set the field "time-startdate" in the "#id_collapse_startdate" "css_element" to "01:00"
     And I set the field "date-enddate" in the "#id_collapse_startdate" "css_element" to "2022-05-19"
+    And I set the field "time-enddate" in the "#id_collapse_startdate" "css_element" to "03:00"
     And I set the field "Display records" in the "#id_collapse_startdate" "css_element" to "within"
     And I set the field "startdate" in the "#id_collapse_startdate" "css_element" to "checked"
     And I wait "1" seconds
@@ -78,7 +86,9 @@ Feature: Timespan filtering functionality of wunderbyte_table works as expected
     And I set the field "startdate" in the "#id_collapse_startdate" "css_element" to ""
     And I wait "1" seconds
     And I set the field "date-startdate" in the "#id_collapse_startdate" "css_element" to "2023-05-11"
+    And I set the field "time-startdate" in the "#id_collapse_startdate" "css_element" to "14:00"
     And I set the field "date-enddate" in the "#id_collapse_startdate" "css_element" to "2023-05-19"
+    And I set the field "time-enddate" in the "#id_collapse_startdate" "css_element" to "18:00"
     And I set the field "startdate" in the "#id_collapse_startdate" "css_element" to "checked"
     And I wait "1" seconds
     Then I should see "Course 2" in the "#demotable_2_r1" "css_element"
