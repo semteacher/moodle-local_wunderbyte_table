@@ -295,10 +295,10 @@ class filter {
     public static function get_timezone_offset() {
 
         $now = new DateTime("now", new DateTimeZone('GMT'));
-        $gmttime = $now->format('H');
+        $gmttime = $now->format('h');
 
         $now = new DateTime("now", core_date::get_user_timezone_object());
-        $userhour = $now->format('H');
+        $userhour = $now->format('h');
 
         $delta = $gmttime - $userhour;
 
