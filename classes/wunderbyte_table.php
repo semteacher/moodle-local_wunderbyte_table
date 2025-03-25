@@ -1612,7 +1612,8 @@ class wunderbyte_table extends table_sql {
                             // Time values will be concatenated via AND.
                             $filter .= ($valuecounter == 1) ? "" : " AND ";
                             // Apply timezone difference to original timestamp.
-                            $filter .= "($categorykey + $delta)" . ' ' . $operator . ' ' . $timestamp;
+                            //$filter .= "($categorykey + $delta)" . ' ' . $operator . ' ' . $timestamp;
+                            $filter .= $categorykey . ' ' . $operator . ' ' . $timestamp;
 
                             $valuecounter++;
                         }
