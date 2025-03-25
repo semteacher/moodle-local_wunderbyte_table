@@ -21,8 +21,8 @@ Feature: Timespan filtering functionality of wunderbyte_table works as expected
       | fullname | shortname | startdate  | enddate    |
       | Course 1 | C1        | 1652320861 | 1652839261 |
       | Course 2 | C2        | 1683907261 | 1684425661 |
-    ## C1 - 12 May 2022 2:01:01 AM - 18 May 2022 2:01:01 AM
-    ## C2 - 12 May 2023 4:01:01 PM - 18 May 2023 4:01:01 PM
+    ## C1 - 12 May 2022 2:01:01 AM UTC - 18 May 2022 2:01:01 AM UTC
+    ## C2 - 12 May 2023 4:01:01 PM UTC - 18 May 2023 4:01:01 PM UTC
     And the following "course enrolments" exist:
       | user     | course | role           |
       | user1    | C1     | student        |
@@ -33,7 +33,7 @@ Feature: Timespan filtering functionality of wunderbyte_table works as expected
       | page     | PageName2  | PageDesc2  | C2     | PAGE2    |
     And I change viewport size to "1600x3000"
     ## Forcing of timezome is important for date validation
-    ## And the following config values are set as admin:
+    And the following config values are set as admin:
        | timezone      | Europe/Berlin |
        | forcetimezone | Europe/Berlin |
 
@@ -78,7 +78,7 @@ Feature: Timespan filtering functionality of wunderbyte_table works as expected
     And I set the field "date-startdate" in the "#id_collapse_startdate" "css_element" to "2022-05-11"
     And I set the field "time-startdate" in the "#id_collapse_startdate" "css_element" to "01:00"
     And I set the field "date-enddate" in the "#id_collapse_startdate" "css_element" to "2022-05-19"
-    And I set the field "time-enddate" in the "#id_collapse_startdate" "css_element" to "03:00"
+    And I set the field "time-enddate" in the "#id_collapse_startdate" "css_element" to "05:00"
     And I set the field "Display records" in the "#id_collapse_startdate" "css_element" to "within"
     And I set the field "startdate" in the "#id_collapse_startdate" "css_element" to "checked"
     And I wait "1" seconds
