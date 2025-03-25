@@ -446,7 +446,14 @@ export function getDateAndTimePickerDataAsUnix(filtercontainer, id = '') {
   let time = timepicker.value;
 
   let unixTimestamp = Date.parse(date + ' ' + time);
-  let tenDigitTimestamp = unixTimestamp;
+  let date1 = new Date(unixTimestamp);
+  // eslint-disable-next-line no-console
+  console.log(unixTimestamp);
+  // eslint-disable-next-line no-console
+  console.log(date1.getTimezoneOffset());
+  let tenDigitTimestamp = unixTimestamp - (date1.getTimezoneOffset() * 60000);
+  // eslint-disable-next-line no-console
+  console.log(tenDigitTimestamp);
 
   return tenDigitTimestamp;
 }
