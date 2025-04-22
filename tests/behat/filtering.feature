@@ -239,3 +239,4 @@ Feature: Filtering functionality of wunderbyte_table works as expected
     And I should see "user2" in the "#demotable_4_r3" "css_element"
     And "//*[contains(@id, 'demotable_4')]//tr[@id, 'demotable_4_r4']" "xpath_element" should not exist
     And I clean wbtable cache
+    And I log out
