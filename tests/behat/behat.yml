@@ -1,0 +1,8 @@
+default:
+  extensions:
+    Behat\MinkExtension:
+      goutte: ~
+      selenium2: ~
+    Moodle\BehatExtension:
+      context:
+        - local_wunderbyte_table\behat\behat_wunderbyte_table_hooks

@@ -37,6 +37,9 @@ class behat_local_wunderbyte_table extends behat_base {
      */
     public function i_clean_wbtable_cache() {
         global $DB;
+        //mtrace("Cleaning up wunderbyte table and cache...\n");
+        $records = $DB->get_records('local_wunderbyte_table');
+        echo "Found " . count($records) . " cached records before cleanup.\n";
         // Mandatory clean-up.
         cache_helper::purge_by_event('changesinwunderbytetable');
         cache_helper::purge_by_event('setbackencodedtables');
@@ -44,6 +47,8 @@ class behat_local_wunderbyte_table extends behat_base {
         $sql = "DELETE FROM {local_wunderbyte_table}
                       WHERE hash LIKE '%_filterjson'
                          OR hash LIKE '%_sqlquery'";
+        $DB->execute($sql);
+        $sql = "DELETE FROM {local_wunderbyte_table}";
         $DB->execute($sql);
         $_POST = [];
         cache_helper::purge_all();

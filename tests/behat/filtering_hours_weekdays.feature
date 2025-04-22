@@ -46,7 +46,8 @@ Feature: Hours and weekdays filtering functionality of wunderbyte_table works as
 
   @javascript
   Scenario: Filter users table in wb_table by weekdays
-    Given I log in as "admin"
+    Given I clean wbtable cache 
+    And I log in as "admin"
     When I visit "/local/wunderbyte_table/demo.php"
     And I follow "Demo table 4"
     ## Filter panel being hidden by default on this tab
@@ -79,7 +80,8 @@ Feature: Hours and weekdays filtering functionality of wunderbyte_table works as
 
   @javascript
   Scenario: Filter course table in wb_table by fullname and hourlist
-    Given I log in as "admin"
+    Given I clean wbtable cache 
+    And I log in as "admin"
     When I visit "/local/wunderbyte_table/demo.php"
     And I follow "Demo table 2"
     ## Filter panel being hidden by default on this tab
