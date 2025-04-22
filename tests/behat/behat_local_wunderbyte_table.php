@@ -46,5 +46,6 @@ class behat_local_wunderbyte_table extends behat_base {
                          OR hash LIKE '%_sqlquery'";
         $DB->execute($sql);
         $_POST = [];
+        cache_helper::purge_all();
     }
 }
