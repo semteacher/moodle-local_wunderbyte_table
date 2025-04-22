@@ -2,7 +2,8 @@
 Feature: Hours and weekdays filtering functionality of wunderbyte_table works as expected
 
   Background:
-    Given the following config values are set as admin:
+    Given I clean wbtable cache
+    And the following config values are set as admin:
       | config        | value         |
       | texteditors   | atto,textarea |
       | timezone      | Europe/Brussels |
@@ -42,11 +43,15 @@ Feature: Hours and weekdays filtering functionality of wunderbyte_table works as
       | page     | PageName1  | PageDesc1  | C1     | PAGE1    |
       | page     | PageName2  | PageDesc2  | C2     | PAGE2    |
     And I change viewport size to "1600x3000"
-    And I clean wbtable cache
+    ##And I clean wbtable cache
 
   @javascript
   Scenario: Filter users table in wb_table by weekdays
-    Given I clean wbtable cache 
+    Given I clean wbtable cache
+    And the following config values are set as admin:
+      | config        | value         |
+      | timezone      | Europe/Brussels |
+      | forcetimezone | Europe/Brussels |
     And I log in as "admin"
     When I visit "/local/wunderbyte_table/demo.php"
     And I follow "Demo table 4"
