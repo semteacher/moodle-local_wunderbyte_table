@@ -38,6 +38,105 @@ use local_wunderbyte_table\local\sortables\types\standardsortable;
 use moodle_exception;
 
 /**
+ * Test-only export format that captures rows without terminating the process.
+ */
+class test_download_export_format {
+    /** @var array<string> */
+    private $headers = [];
+
+    /** @var array<int, array<int, mixed>> */
+    private $rows = [];
+
+    /**
+     * Allow tablelib to call start_document without side effects.
+     *
+     * @param mixed ...$args
+     */
+    public function start_document(...$args): void {
+        // No-op for tests.
+    }
+
+    /**
+     * Allow tablelib to call finish_document without exiting.
+     *
+     * @param mixed ...$args
+     */
+    public function finish_document(...$args): void {
+        // No-op for tests.
+    }
+
+    /**
+     * Capture table headers if provided.
+     *
+     * @param mixed ...$args
+     */
+    public function start_table(...$args): void {
+        $headers = $args[0] ?? [];
+        if (is_array($headers)) {
+            $this->headers = $headers;
+        }
+    }
+
+    /**
+     * Collect data rows.
+     *
+     * @param mixed ...$args
+     */
+    public function add_data(...$args): void {
+        $row = $args[0] ?? [];
+        if (is_array($row)) {
+            $this->rows[] = $row;
+        }
+    }
+
+    /**
+     * Collect keyed data rows.
+     *
+     * @param mixed ...$args
+     */
+    public function add_data_keyed(...$args): void {
+        $row = $args[0] ?? [];
+        if (is_array($row)) {
+            $this->rows[] = array_values($row);
+        }
+    }
+
+    /**
+     * Render CSV output to the active output buffer.
+     *
+     * @param mixed ...$args
+     */
+    public function finish_table(...$args): void {
+        $handle = fopen('php://output', 'w');
+        if (!empty($this->headers)) {
+            fputcsv($handle, $this->headers);
+        }
+        foreach ($this->rows as $row) {
+            fputcsv($handle, $row);
+        }
+        fclose($handle);
+    }
+}
+
+/**
+ * Test-only table that swaps in a safe export format.
+ */
+class testable_demo_table extends demo_table {
+    /**
+     * Override is_downloading to avoid exit behavior in tests.
+     *
+     * @param string $download
+     * @param string $filename
+     * @param string $sheettitle
+     * @return void
+     */
+    public function is_downloading($download = '', $filename = '', $sheettitle = '') {
+        parent::is_downloading($download, $filename, $sheettitle);
+        $this->exportclass = new test_download_export_format();
+    }
+}
+
+/**
  * Test base functionality of wunderbyte_table
  *
  * @package local_wunderbyte_table
@@ -64,6 +163,35 @@ final class base_test extends advanced_testcase {
         // Mandatory clean-up.
         cache_helper::purge_by_event('changesinwunderbytetable');
         $_POST = [];
+    }
+
+    /**
+     * Validate download output is filtered without terminating the process.
+     *
+     * @covers \local_wunderbyte_table\wunderbyte_table::finish_output
+     * @covers \local_wunderbyte_table\wunderbyte_table::printtable
+     *
+     * @throws \coding_exception
+     * @throws \dml_exception
+     */
+    public function test_download_output_respects_filter_without_exit(): void {
+        $this->resetAfterTest(true);
+        $this->setAdminUser();
+
+        $this->create_test_courses(3);
+
+        $_GET['wbtfilter'] = json_encode(['fullname' => ['Test course 1']]);
+
+        $table = $this->create_demo2_table(testable_demo_table::class);
+        $table->is_downloading('csv', 'download', 'download');
+
+        ob_start();
+        $table->printtable(0, true);
+        $csv = ob_get_clean();
+
+        $this->assertNotEmpty($csv);
+        $this->assertStringContainsString('Test course 1', $csv);
+        $this->assertStringNotContainsString('Test course 2', $csv);
     }
 
     /**
@@ -362,8 +490,8 @@ final class base_test extends advanced_testcase {
      * @return wunderbyte_table
      *
      */
-    public function create_demo2_table() {
-        $table = new demo_table('demotable_1');
+    public function create_demo2_table(string $classname = demo_table::class) {
+        $table = new $classname('demotable_1');
 
         $columns = [
             'id' => get_string('id', 'local_wunderbyte_table'),
