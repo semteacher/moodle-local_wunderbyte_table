@@ -1,0 +1,323 @@
+<?php
+// This file is part of Moodle - http://moodle.org/
+//
+// Moodle is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Moodle is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+
+/**
+ * Tests for booking option events.
+ *
+ * @package local_wunderbyte_table
+ * @category test
+ * @copyright 2026 Wunderbyte GmbH <info@wunderbyte.at>
+ * @author Andrii Semenets
+ * @license http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
+
+namespace local_wunderbyte_table;
+
+use advanced_testcase;
+use cache_helper;
+use coding_exception;
+use local_wunderbyte_table\external\load_data;
+use local_wunderbyte_table\filters\types\callback;
+use local_wunderbyte_table\filters\types\datepicker;
+use local_wunderbyte_table\filters\types\standardfilter;
+use local_wunderbyte_table\local\sortables\types\standardsortable;
+use local_wunderbyte_table\tests\demo_table_mock;
+use local_wunderbyte_table\tests\wunderbyte_table_mock;
+use moodle_exception;
+
+/**
+ * Test base functionality of wunderbyte_table
+ *
+ * @package local_wunderbyte_table
+ * @category test
+ * @copyright 2026 Wunderbyte GmbH <info@wunderbyte.at>
+ * @license http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ *
+ * @runTestsInSeparateProcesses
+ */
+final class download_test extends advanced_testcase {
+    /**
+     * Tests set up.
+     */
+    public function setUp(): void {
+        parent::setUp();
+        $this->resetAfterTest(true);
+    }
+
+    /**
+     * Mandatory clean-up after each test.
+     */
+    public function tearDown(): void {
+        parent::tearDown();
+        // Mandatory clean-up.
+        cache_helper::purge_by_event('changesinwunderbytetable');
+        $_POST = [];
+    }
+
+    /**
+     * Test download applies filter and count_rows
+     *
+     * @return void
+     * @throws coding_exception
+     *
+     */
+    public function test_download_applies_filter_and_count_rows(): void {
+        $this->resetAfterTest(true);
+        $this->setAdminUser();
+
+        // Create test data (example: courses).
+        $this->create_test_courses(5);
+        $table = $this->create_demo2_table();
+        $encoded = $table->return_encoded_table();
+        $nrofrows = $this->get_rowscount_for_table($table);
+        $this->assertEquals(5, $nrofrows);
+
+        // Apply a filter like the UI would do (via URL param).
+        $_GET['wbtfilter'] = json_encode(['fullname' => ['Test course 1']]);
+
+        // Re-create from cache so filters are applied during query.
+        $cached = wunderbyte_table_mock::instantiate_from_tablecache_hash($encoded);
+        //$cached->printtable($cached->pagesize, $cached->useinitialsbar, $cached->downloadhelpbutton);
+        //$this->assertEquals(1, $cached->totalrows);
+        $nrofrows = $this->get_rowscount_for_table($cached);
+        $this->assertEquals(1, $nrofrows);
+
+        // Force download output (csv, xls, etc.).
+        $cached->is_downloading('csv', 'download', 'download');
+        $nrofrows = $this->get_rowscount_for_table($cached);
+        $this->assertEquals(1, $nrofrows);
+
+        // Capture the download output (csv) and count rows/bytes.
+        ob_start();
+        $cached->printtable($cached->pagesize, $cached->useinitialsbar, $cached->downloadhelpbutton);
+        $csv = ob_get_clean();
+
+        $rows = array_filter(explode("\n", trim($csv)));
+        $this->assertCount(2, $rows); // Header + 1 data row.
+
+        // Alternatively, assert byte size:
+        // $this->assertSame(/** expected bytes **/, strlen($csv));
+    }
+
+    /**
+     * Function to create and return wunderbyte table class.
+     *
+     * @return wunderbyte_table
+     *
+     */
+    public function create_demo2_table() {
+        $table = new demo_table_mock('demotable_1');
+
+        $columns = [
+            'id' => get_string('id', 'local_wunderbyte_table'),
+            'fullname' => get_string('fullname'),
+            'shortname' => get_string('shortname'),
+            'action' => get_string('action'),
+            'startdate' => get_string('startdate'),
+            'enddate' => get_string('enddate'),
+        ];
+
+        // Number of items must be equal.
+        $table->define_headers(array_values($columns));
+        $table->define_columns(array_keys($columns));
+
+        $table->define_fulltextsearchcolumns(['fullname', 'shortname']);
+        $table->define_sortablecolumns($columns);
+
+        $standardsortable = new standardsortable(
+            'enrolledusers',
+            'enrolledusers'
+        );
+        $select = '(SELECT COUNT(ue.id)
+                    FROM {user_enrolments} ue
+                    JOIN {enrol} e ON ue.enrolid = e.id
+                    WHERE e.courseid = s1.id) AS enrolledusers';
+        $from = '';
+        $where = '';
+        $standardsortable->define_sql($select, $from, $where);
+
+        $table->add_sortable($standardsortable);
+
+        $standardfilter = new standardfilter('fullname', 'fullname');
+        $table->add_filter($standardfilter);
+
+        $callbackfilter = new callback('iddivisblebythree', 'iddivisblebythree');
+        $callbackfilter->add_options([
+            0 => 'notdivisblebythree',
+            1 => 'divisblebythree',
+        ]);
+        // This filter expects a record from booking options table.
+        // We check if it is bookable for the user.
+        $callbackfilter->define_callbackfunction('local_wunderbyte_table\base_test::filter_iddivisiblebythree');
+        $table->add_filter($callbackfilter);
+
+        $datepicker = new datepicker('enddate', get_string('enddate'));
+        // For the datepicker, we need to add special options.
+        $datepicker->add_options(
+            'standard',
+            '<',
+            get_string('apply_filter', 'local_wunderbyte_table'),
+            'now',
+        );
+        $table->add_filter($datepicker);
+
+        $table->set_filter_sql('*', "(SELECT * FROM {course} ORDER BY id ASC LIMIT 112) as s1", 'id > 1', '');
+
+        $table->pageable(true);
+
+        $table->pagesize = 20;
+
+        $table->stickyheader = false;
+        $table->showcountlabel = true;
+        $table->gotopage = true;
+        $table->showdownloadbutton = true;
+        $table->showreloadbutton = true;
+        $table->showrowcountselect = true;
+        $table->filteronloadinactive = true;
+
+        return $table;
+    }
+
+    /**
+     * Create a defined number of testcourses.
+     *
+     * @param int $coursestocreate
+     * @param array $options
+     * @return array
+     *
+     */
+    public function create_test_courses(int $coursestocreate = 1, $options = []): array {
+        global $DB;
+
+        $returnarray = [];
+        // We add another three courses.
+        $counter = 0;
+        while ($counter < $coursestocreate) {
+            $counter++;
+
+            $courseoptions = $options;
+            if (!isset($options['fullname'])) {
+                $courseoptions['fullname'] = 'Test course ' . $counter;
+            }
+            $returnarray[$counter] = $this->getDataGenerator()->create_course($courseoptions);
+        }
+        return $returnarray;
+    }
+
+    /**
+     * Returns rows via webservice static function from given table.
+     *
+     * @param wunderbyte_table $table
+     * @param int $page
+     * @param string $tsort
+     * @param string $thide
+     * @param string $tshow
+     * @param int $tdir
+     * @param int $treset
+     * @param string $filterobjects
+     * @param string $searchtext
+     *
+     * @return int
+     *
+     */
+    public function get_rowscount_for_table(
+        wunderbyte_table $table,
+        $page = null,
+        $tsort = null,
+        $thide = null,
+        $tshow = null,
+        $tdir = null,
+        $treset = null,
+        $filterobjects = null,
+        $searchtext = null
+    ): int {
+
+        $rows = $this->get_rows_for_table(
+            $table,
+            $page,
+            $tsort,
+            $thide,
+            $tshow,
+            $tdir,
+            $treset,
+            $filterobjects,
+            $searchtext
+        );
+
+        return count($rows);
+    }
+
+    /**
+     * Returns the actual rows for a table. This only retrieves the rows for the current page.
+     *
+     * @param wunderbyte_table $table
+     * @param int $page
+     * @param string $tsort
+     * @param string $thide
+     * @param string $tshow
+     * @param int $tdir
+     * @param int $treset
+     * @param string $filterobjects
+     * @param string $searchtext
+     *
+     * @return array
+     *
+     */
+    public function get_rows_for_table(
+        wunderbyte_table $table,
+        $page = null,
+        $tsort = null,
+        $thide = null,
+        $tshow = null,
+        $tdir = null,
+        $treset = null,
+        $filterobjects = null,
+        $searchtext = null
+    ): array {
+
+        $encodedtable = $table->return_encoded_table();
+        $result = load_data::execute(
+            $encodedtable,
+            $page,
+            $tsort,
+            $thide,
+            $tshow,
+            $tdir,
+            $treset,
+            $filterobjects,
+            $searchtext
+        );
+        $jsonobject = json_decode($result['content']);
+
+        if (!isset($jsonobject->table->rows)) {
+            throw new moodle_exception('no_items_available_yet', 'wunderbyte_table', '', json_encode($jsonobject));
+        }
+        $rows = $jsonobject->table->rows ?? 0;
+        return $rows;
+    }
+
+    /**
+     * Function to be used by the callback filter.
+     *
+     * @param mixed $record
+     *
+     * @return bool
+     *
+     */
+    public static function filter_iddivisiblebythree($record): bool {
+        return $record->id % 3 === 0;
+    }
+}

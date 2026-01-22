@@ -29,7 +29,6 @@ namespace local_wunderbyte_table;
 use advanced_testcase;
 use cache_helper;
 use coding_exception;
-use Exception;
 use local_wunderbyte_table\external\load_data;
 use local_wunderbyte_table\filters\types\callback;
 use local_wunderbyte_table\filters\types\datepicker;
@@ -64,49 +63,6 @@ final class base_test extends advanced_testcase {
         // Mandatory clean-up.
         cache_helper::purge_by_event('changesinwunderbytetable');
         $_POST = [];
-    }
-
-    /**
-     * Test download applies filter and count_rows
-     *
-     * @return void
-     * @throws coding_exception
-     *
-     */
-    public function test_download_applies_filter_and_count_rows(): void {
-        $this->resetAfterTest(true);
-        $this->setAdminUser();
-
-        // Create test data (example: courses).
-        $this->create_test_courses(5);
-        $table = $this->create_demo2_table();
-        $encoded = $table->return_encoded_table();
-        $nrofrows = $this->get_rowscount_for_table($table);
-        $this->assertEquals(5, $nrofrows);
-
-        // Apply a filter like the UI would do (via URL param).
-        $_GET['wbtfilter'] = json_encode(['fullname' => ['Test course 1']]);
-
-        // Re-create from cache so filters are applied during query.
-        $cached = wunderbyte_table::instantiate_from_tablecache_hash($encoded);
-        $cached->printtable($cached->pagesize, $cached->useinitialsbar, $cached->downloadhelpbutton);
-        $this->assertEquals(1, $cached->totalrows);
-
-        // Force download output (csv, xls, etc.).
-        $cached->is_downloading('csv', 'download', 'download');
-        $nrofrows = $this->get_rowscount_for_table($cached);
-        $this->assertEquals(1, $nrofrows);
-
-        // Capture the download output (csv) and count rows/bytes.
-        ob_start();
-        $cached->printtable($cached->pagesize, $cached->useinitialsbar, $cached->downloadhelpbutton);
-        $csv = ob_get_clean();
-
-        $rows = array_filter(explode("\n", trim($csv)));
-        $this->assertCount(2, $rows); // Header + 1 data row.
-
-        // Alternatively, assert byte size:
-        // $this->assertSame(/** expected bytes **/, strlen($csv));
     }
 
     /**
