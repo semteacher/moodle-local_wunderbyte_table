@@ -34,6 +34,7 @@ use local_wunderbyte_table\filters\types\hourlist;
 use local_wunderbyte_table\filters\types\intrange;
 use local_wunderbyte_table\filters\types\standardfilter;
 use local_wunderbyte_table\filters\types\weekdays;
+use local_wunderbyte_table\filters\types\exactcolumn;
 use local_wunderbyte_table\wunderbyte_table;
 use renderable;
 use renderer_base;
@@ -170,8 +171,10 @@ class demo implements renderable, templatable {
         $standardfilter = new standardfilter('lastname', get_string('lastname'));
         $table->add_filter($standardfilter);
 
-        $standardfilter = new standardfilter('email', get_string('email'));
-        $table->add_filter($standardfilter);
+        //$standardfilter = new standardfilter('email', get_string('email'));
+        //$table->add_filter($standardfilter);
+        $exactcolumn = new exactcolumn('email', 'Email');
+        $table->add_filter($exactcolumn);
 
         // To test this explode filter, add values separeted with "," to the department field in users table. 1 & 2 will be translated as defined below.
         $standardfilter = new standardfilter('department', get_string('department'));
@@ -668,8 +671,8 @@ class demo implements renderable, templatable {
         // It is recommended to avoid of usage of simple single words like "table" to reduce chance of affecting by Moodle`s core CSS
         $table = new demo_table('demotable_4');
 
-        $table->define_headers(['id', 'username', 'firstname', 'lastname', 'email', 'action', 'timecreated', 'timemodified']);
-        $table->define_columns(['id', 'username', 'firstname', 'lastname', 'email', 'action', 'timecreated', 'timemodified']);
+        $table->define_headers(['id', 'username', 'firstname', 'lastname', 'email', 'action', 'timecreated', 'timemodified', 'department']);
+        $table->define_columns(['id', 'username', 'firstname', 'lastname', 'email', 'action', 'timecreated', 'timemodified', 'department']);
 
         $standardfilter = new standardfilter('firstname',  get_string('firstname'));
         $table->add_filter($standardfilter);
