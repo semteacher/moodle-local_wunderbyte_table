@@ -3,29 +3,29 @@ Feature: Filtering functionality of wunderbyte_table works as expected
 
   Background:
     Given the following "users" exist:
-      | username | firstname | lastname | department |
-      | user1    | Username  | 1        | 1,2        |
-      | user2    | Username  | 2        | 2          |
-      | user3    | Username  | 3        | 3,4        |
-      | user4    | Username  | 4        | 1,2        |
-      | user5    | Username  | 5        | ,1         |
-      | user6    | Username  | 6        | 1,4        |
-      | user7    | Username  | 7        | 2          |
-      | user8    | Username  | 8        | 5          |
-      | user9    | Username  | 9        | 3          |
-      | user10   | Username  | 10       | 2          |
-      | user11   | Username  | 11       | 2          |
-      | user12   | Username  | 12       | 1,2        |
-      | user13   | Username  | 13       | 5          |
-      | user14   | Username  | 14       | 7          |
-      | user15   | Username  | 15       | 6,7        |
-      | user16   | Username  | 16       | 4,5,6,7,8  |
-      | user17   | Username  | 17       | 1          |
-      | user18   | Username  | 18       | 1          |
-      | user19   | Username  | 19       | 1          |
-      | user20   | Username  | 20       | 1          |
-      | user21   | Username  | 21       | 1          |
-      | teacher1 | Teacher   | 1        | 1          |
+      | username | firstname | lastname | department | institution |
+      | user1    | Username  | 1        | 1,2        | TNMU        |
+      | user2    | Username  | 2        | 2          | TNMU        |
+      | user3    | Username  | 3        | 3,4        | TNMU        |
+      | user4    | Username  | 4        | 1,2        | TNMU        |
+      | user5    | Username  | 5        | ,1         | TNMU        |
+      | user6    | Username  | 6        | 1,4        |             |
+      | user7    | Username  | 7        | 2          | TNMUF       |
+      | user8    | Username  | 8        | 5          | TNMUF       |
+      | user9    | Username  | 9        | 3          | TNMUF       |
+      | user10   | Username  | 10       | 2          | TNMUF       |
+      | user11   | Username  | 11       | 2          | TNMUF       |
+      | user12   | Username  | 12       | 1,2        |             |
+      | user13   | Username  | 13       | 5          | TNM         |
+      | user14   | Username  | 14       | 7          | TNM         |
+      | user15   | Username  | 15       | 6,7        | TNM         |
+      | user16   | Username  | 16       | 4,5,6,7,8  | TNM         |
+      | user17   | Username  | 17       | 1          | TNM         |
+      | user18   | Username  | 18       | 1          | TNM         |
+      | user19   | Username  | 19       | 1          | TNM         |
+      | user20   | Username  | 20       | 1          | TNM         |
+      | user21   | Username  | 21       | 1          | TNM         |
+      | teacher1 | Teacher   | 1        | 1          |             |
     And the following "courses" exist:
       | fullname | shortname |
       | Course 1 | C1        |
