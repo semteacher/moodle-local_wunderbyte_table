@@ -27,6 +27,7 @@
 namespace local_wunderbyte_table\output;
 
 use local_wunderbyte_table\demo_table;
+use local_wunderbyte_table\filters\types\exactcolumn;
 use local_wunderbyte_table\filters\types\customfieldfilter;
 use local_wunderbyte_table\filters\types\datepicker;
 use local_wunderbyte_table\filters\types\hierarchicalfilter;
@@ -96,6 +97,7 @@ class demo implements renderable, templatable {
             'email' => get_string('email'),
             'action' => get_string('action'),
             'department' => get_string('department'),
+            'institution' => get_string('institution'),
             'timemodified' => get_string('modified'),
 
         ];
@@ -213,6 +215,14 @@ class demo implements renderable, templatable {
             'uid.data'
         );
         $table->add_filter($customfieldfilter);
+
+        /*
+         * The exact column filter is used to filter columns with exact values.
+         * Normal filter search uses wildcards so input "abc" would also return value "aabcd".
+         * Exact column filter search for exact matches only.
+         */
+        $exactcolumfilter = new exactcolumn('institution', 'Institution');
+        $table->add_filter($exactcolumfilter);
 
         // Add action buttons to bottom of table. Demo of all defined types.
         // Define if it triggers a modal, if records need to be selected
