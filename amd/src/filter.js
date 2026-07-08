@@ -97,7 +97,7 @@ export function initializeSearchInputListener(selector, idstring, encodedtable) 
   if (searchInput) {
         searchInput.addEventListener('input', debounce(() => {
          const searchValue = searchInput.value;
-          checked[idstring]['titleprefix'] = searchValue;
+          checked[idstring][searchInput.name] = searchValue;
           triggerReload(idstring, encodedtable);
     }, 300));
   }

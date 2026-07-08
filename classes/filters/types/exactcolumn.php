@@ -100,7 +100,7 @@ class exactcolumn extends base {
             global $DB;
 
             // Use the LIKE clause for searching prefixes.
-            $key = $table->set_params(strtolower($categoryvalue));
+            $key = $table->set_params($categoryvalue);
             $filter .= "{$columnname} = :$key";
         }
     }
